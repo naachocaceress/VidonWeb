@@ -86,7 +86,7 @@ images.gameOver.src = 'https://raw.githubusercontent.com/samuelcust/flappy-bird-
 images.message.src = 'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/refs/heads/master/sprites/message.png';
 
 images.vidonLogo.src = 'https://carta.vidonbar.com.ar/assets/logoCirculo-DgQokdOB.webp';
-images.jugaygana.src = '/jugaygana.png';
+images.jugaygana.src = 'https://github.com/naachocaceress/VidonWeb/blob/main/VidonWebApp/fb/jugaygana.png?raw=true';
 
 
 for (let i = 0; i < 10; i++) {
@@ -153,6 +153,13 @@ function drawScore() {
         const digit = parseInt(scoreStr[i]);
         ctx.drawImage(images.numbers[digit], (canvas.width / 2.25 - 5 * scoreStr.length * scale) + xOffset, 20 * scale);
         xOffset += 25 * scale;
+    }
+
+    // Mostrar mensaje de "¡Ganaste!" si el puntaje es mayor a 10
+    if (score > 3) {
+        ctx.fillStyle = 'white'; // Color del texto
+        ctx.font = `${20 * scale}px Arial`; // Tamaño y tipo de fuente
+        ctx.fillText('¡Ganaste!', canvas.width / 2 - 40 * scale, canvas.height / 2); // Dibujar el texto en el centro
     }
 }
 
@@ -241,17 +248,28 @@ function endGame() {
     // Maneja la lógica de finalización del juego, reproduce sonidos y detiene el bucle del juego.
     if (!gameOver) {
         audio.hit.play();
-        //setTimeout(() => audio.die.play(), 500);
     }
     gameOver = true;
     cancelAnimationFrame(gameLoop);
+    showRestartButton(); // Mostrar el botón de reinicio
+}
 
-    if (aiControlled) {
-        setTimeout(() => {
-            resetGame();
-            gameUpdate();
-        }, 1000);
-    }
+function showRestartButton() {
+    const restartButton = document.createElement('button');
+    restartButton.innerText = 'Reiniciar Juego';
+    restartButton.style.position = 'absolute';
+    restartButton.style.top = '50%';
+    restartButton.style.left = '50%';
+    restartButton.style.transform = 'translate(-50%, -50%)';
+    restartButton.style.fontSize = '20px';
+    restartButton.style.padding = '10px 20px';
+    restartButton.style.cursor = 'pointer';
+    document.body.appendChild(restartButton);
+
+    restartButton.addEventListener('click', () => {
+        resetGame();
+        document.body.removeChild(restartButton); // Eliminar el botón después de reiniciar
+    });
 }
 
 function jump() {
@@ -261,9 +279,7 @@ function jump() {
         audio.wing.play();
     } else if (!gameStarted) {
         startGame();
-    } else if (gameOver) {
-        resetGame();
-    }
+    } 
 }
 
 function startGame() {
@@ -308,7 +324,7 @@ function showStartScreen() {
 
     
     ctx.drawImage(images.vidonLogo, (canvas.width / 2 - 40 * scale), 10 * scale, 80 * scale, 80 * scale); // Escalar el logo
-    ctx.drawImage(images.jugaygana, (canvas.width / 2 - 100 * scale), 10 * scale, 200 * scale, 100 * scale); // Escalar el logo
+    ctx.drawImage(images.jugaygana, (canvas.width / 2 - 100 * scale), 430 * scale, 200 * scale, 60 * scale); // Escalar el logo
 }
 
 function aiControl() {
