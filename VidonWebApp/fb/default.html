@@ -1,0 +1,366 @@
+<html><head><base href="https://websim.creations" target="_blank">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flappy Bird Clone Vidon bar</title>
+<style>
+    html, body{
+        padding: 0% !important;
+        margin: 0% !important;
+    }
+
+    .bodyGame {
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        font-family: Arial, sans-serif;
+    }
+    #background {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url(https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/refs/heads/master/sprites/background-day.png);
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: cover;
+        filter: brightness(0.5); /* Aplica un filtro de brillo para oscurecer la imagen */
+        z-index: -1; /* Asegúrate de que esté detrás del canvas */
+    }
+    #gameCanvas {
+        position: absolute; /* Centra el canvas en la pantalla */
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+</style>
+</head>
+<body>
+<div class="bodyGame">
+
+<div id="background"></div>
+<canvas id="gameCanvas" width="288" height="512"></canvas>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+
+// Ajustar la altura del canvas al 100% de la ventana
+canvas.height = window.innerHeight;
+
+// Calcular el ancho para mantener la relación de aspecto
+const aspectRatio = 288 / 512; // Relación de aspecto original
+canvas.width = canvas.height * aspectRatio; // Ajustar el ancho basado en la altura
+
+const ctx = canvas.getContext('2d');
+
+// Calcular el factor de escala
+let scale = canvas.height / 512; // 512 es la altura original del juego
+
+const images = {
+    background: new Image(),
+    base: new Image(),
+    pipeNorth: new Image(),
+    pipeSouth: new Image(),
+    bird: [new Image(), new Image(), new Image()],
+    gameOver: new Image(),
+    message: new Image(),
+    numbers: Array(10).fill().map(() => new Image()),
+
+    vidonLogo: new Image(),
+    jugaygana: new Image(),
+};
+
+images.background.src = 'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/refs/heads/master/sprites/background-day.png';
+images.base.src = 'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/refs/heads/master/sprites/base.png';
+images.pipeNorth.src = 'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/refs/heads/master/sprites/pipe-green.png';
+images.pipeSouth.src = 'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/refs/heads/master/sprites/pipe-green.png';
+images.bird[0].src = 'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/refs/heads/master/sprites/yellowbird-downflap.png';
+images.bird[1].src = 'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/refs/heads/master/sprites/yellowbird-midflap.png';
+images.bird[2].src = 'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/refs/heads/master/sprites/yellowbird-upflap.png';
+images.gameOver.src = 'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/refs/heads/master/sprites/gameover.png';
+images.message.src = 'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/refs/heads/master/sprites/message.png';
+
+images.vidonLogo.src = 'https://carta.vidonbar.com.ar/assets/logoCirculo-DgQokdOB.webp';
+images.jugaygana.src = '/jugaygana.png';
+
+
+for (let i = 0; i < 10; i++) {
+    images.numbers[i].src = `https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/refs/heads/master/sprites/${i}.png`;
+}
+
+const audio = {
+    die: new Audio('https://github.com/samuelcust/flappy-bird-assets/raw/refs/heads/master/audio/die.wav'),
+    hit: new Audio('https://github.com/samuelcust/flappy-bird-assets/raw/refs/heads/master/audio/hit.wav'),
+    point: new Audio('https://github.com/samuelcust/flappy-bird-assets/raw/refs/heads/master/audio/point.wav'),
+    swoosh: new Audio('https://github.com/samuelcust/flappy-bird-assets/raw/refs/heads/master/audio/swoosh.wav'),
+    wing: new Audio('https://github.com/samuelcust/flappy-bird-assets/raw/refs/heads/master/audio/wing.wav')
+};
+
+let bird = {
+    x: 50,
+    y: 200,
+    velocity: 0,
+    gravity: 0.15,
+    jump: -4.6,
+    frame: 0,
+    flapSpeed: 0,
+    flapDelay: 5
+};
+
+let pipes = [];
+let score = 0;
+let gameLoop;
+let gameStarted = false;
+let baseX = 0;
+let gameOver = false;
+let aiControlled = false;
+
+let lastTime = performance.now();
+
+function drawBird() {
+    // Dibuja el pájaro en el canvas, aplicando transformaciones para la posición y rotación.
+    ctx.save();
+    ctx.translate(bird.x * scale, bird.y * scale);
+    let angle = bird.velocity * 2;
+    ctx.rotate(angle * Math.PI / 180);
+    ctx.drawImage(images.bird[bird.frame], -17 * scale, -12 * scale, 34 * scale, 24 * scale);
+    ctx.restore();
+}
+
+function drawPipes() {
+    // Dibuja los tubos en el canvas, incluyendo la lógica para invertir la imagen del tubo superior.
+    pipes.forEach(pipe => {
+        ctx.save();
+        ctx.translate(pipe.x * scale + 26 * scale, pipe.top * scale);
+        ctx.scale(1, -1);
+        ctx.drawImage(images.pipeNorth, -26 * scale, 0, 52 * scale, pipe.top * scale);
+        ctx.restore();
+        
+        ctx.drawImage(images.pipeSouth, pipe.x * scale, pipe.bottom * scale, 52 * scale, (canvas.height - pipe.bottom) * scale);
+    });
+}
+
+function drawScore() {
+    // Dibuja la puntuación en el canvas, mostrando cada dígito de la puntuación actual.
+    const scoreStr = score.toString();
+    let xOffset = 10 * scale;
+    for (let i = 0; i < scoreStr.length; i++) {
+        const digit = parseInt(scoreStr[i]);
+        ctx.drawImage(images.numbers[digit], (canvas.width / 2.25 - 5 * scoreStr.length * scale) + xOffset, 20 * scale);
+        xOffset += 25 * scale;
+    }
+}
+
+function gameUpdate(currentTime) {
+    // Calcular el tiempo delta
+    const deltaTime = (currentTime - lastTime) / 1000; // Convertir a segundos
+    lastTime = currentTime;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // Limpiar el canvas antes de dibujar
+
+    ctx.drawImage(images.background, 0, 0, canvas.width, canvas.height); // Escalar el fondo al tamaño del canvas
+    
+    updateBird(deltaTime);
+    updatePipes(deltaTime);
+    
+    if (aiControlled) {
+        aiControl();
+    }
+    
+    drawPipes();
+    drawBird();
+    
+    drawScore();
+    
+    if (gameOver) {
+        ctx.drawImage(images.gameOver, (canvas.width / 2 - 96 * scale), (canvas.height / 2 - 42 * scale), 192 * scale, 44 * scale); // Escalar el game over
+    }
+
+    if (!gameOver) {
+        gameLoop = requestAnimationFrame(gameUpdate);
+    }
+}
+
+function updateBird(deltaTime) {
+    // Actualiza la posición y velocidad del pájaro, verifica colisiones con el suelo.
+    bird.velocity += bird.gravity * deltaTime * 60; // Asegúrate de que la gravedad afecte la velocidad
+    bird.y += bird.velocity * deltaTime * 60; // Ajustar la posición del pájaro
+
+    bird.flapSpeed++;
+    if (bird.flapSpeed >= bird.flapDelay) {
+        bird.frame = (bird.frame + 1) % 3;
+        bird.flapSpeed = 0;
+    }
+
+    // Verificar colisión con el suelo
+    if (bird.y + 12 * scale > canvas.height - 10 * scale) {
+        bird.y = canvas.height - 10 * scale - 12 * scale;
+        endGame();
+    }
+}
+
+function updatePipes(deltaTime) {
+    // Actualiza la posición de los tubos, genera nuevos tubos y verifica colisiones con el pájaro.
+    if (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - 200) {
+        let gap = 80; // Espacio entre pipes
+        let topHeight = Math.random() * (canvas.height - gap - 330) + 50; // Modificar altura de aparecer los pipes
+        pipes.push({
+            x: canvas.width,
+            top: topHeight,
+            bottom: topHeight + gap,
+            counted: false
+        });
+    }
+
+    pipes.forEach(pipe => {
+        pipe.x -= 2 * deltaTime * 60; // Ajustar la velocidad de los tubos
+
+        if (pipe.x + 52 < 0) {
+            pipes.shift();
+        }
+
+        if (!pipe.counted && pipe.x < bird.x) {
+            score++;
+            pipe.counted = true;
+            audio.point.play();
+        }
+
+        if (bird.x + 17 > pipe.x && bird.x - 17 < pipe.x + 52 &&
+            (bird.y - 12 < pipe.top || bird.y + 12 > pipe.bottom)) {
+            endGame();
+        }
+    });
+}
+
+function endGame() {
+    // Maneja la lógica de finalización del juego, reproduce sonidos y detiene el bucle del juego.
+    if (!gameOver) {
+        audio.hit.play();
+        //setTimeout(() => audio.die.play(), 500);
+    }
+    gameOver = true;
+    cancelAnimationFrame(gameLoop);
+
+    if (aiControlled) {
+        setTimeout(() => {
+            resetGame();
+            gameUpdate();
+        }, 1000);
+    }
+}
+
+function jump() {
+    // Maneja la lógica de salto del pájaro, inicia el juego si no ha comenzado o reinicia si el juego ha terminado.
+    if (gameStarted && !gameOver) {
+        bird.velocity = bird.jump; // Aplicar la velocidad de salto
+        audio.wing.play();
+    } else if (!gameStarted) {
+        startGame();
+    } else if (gameOver) {
+        resetGame();
+    }
+}
+
+function startGame() {
+    // Inicia el juego, restablece variables y reproduce el sonido de inicio.
+    gameStarted = true;
+    gameOver = false;
+    audio.swoosh.play();
+    resetGame();
+}
+
+function resetGame() {
+    // Restablece el estado del juego a sus valores iniciales, incluyendo la posición del pájaro y la puntuación.
+    bird = {
+        x: 50,
+        y: 200,
+        velocity: 0,
+        gravity: 0.25,
+        jump: -4.6,
+        frame: 0,
+        flapSpeed: 0,
+        flapDelay: 5
+    };
+    pipes = [];
+    score = 0;
+    gameStarted = true;
+    gameOver = false;
+    lastTime = performance.now(); // Reiniciar el tiempo
+    gameUpdate(lastTime); // Iniciar el bucle del juego
+}
+
+function showStartScreen() {
+    // Dibuja la pantalla de inicio del juego, mostrando el fondo, la base y el mensaje de inicio.
+
+    // Dibujar el fondo escalado
+    ctx.drawImage(images.background, 0, 0, canvas.width, canvas.height); // Escalar el fondo al tamaño del canvas
+    
+    // Dibujar la base escalada
+    ctx.drawImage(images.base, 0, canvas.height - 112 * scale, canvas.width, 112 * scale); // Ajustar la base al tamaño del canvas
+    
+    // Dibujar el mensaje escalado
+    ctx.drawImage(images.message, (canvas.width / 2 - 92 * scale), 100 * scale, 184 * scale, 250 * scale); // Escalar el mensaje
+
+    
+    ctx.drawImage(images.vidonLogo, (canvas.width / 2 - 40 * scale), 10 * scale, 80 * scale, 80 * scale); // Escalar el logo
+    ctx.drawImage(images.jugaygana, (canvas.width / 2 - 100 * scale), 10 * scale, 200 * scale, 100 * scale); // Escalar el logo
+}
+
+function aiControl() {
+    // Controla la lógica de la IA para el pájaro, determinando cuándo debe saltar en función de la posición de los tubos.
+    if (pipes.length > 0) {
+        const nextPipe = pipes[0];
+        const distanceToNextPipe = nextPipe.x - bird.x;
+        const heightDifference = bird.y - (nextPipe.top + 60);
+
+        // Ajustes na lógica da IA
+        if (distanceToNextPipe < 120) {
+            if (heightDifference > 0 || bird.y > nextPipe.bottom - 30) {
+                jump();
+            }
+        } else if (bird.y > canvas.height / 2) {
+            jump();
+        }
+    } else {
+        // Se não houver canos, mantenha o pássaro no meio da tela
+        if (bird.y > canvas.height / 2) {
+            jump();
+        }
+    }
+}
+
+canvas.addEventListener('click', () => {
+    if (!aiControlled) {
+        jump();
+    }
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' && !aiControlled) jump();
+});
+
+let loadedImages = 0;
+const totalImages = Object.values(images).flat().length;
+
+Object.values(images).flat().forEach(img => {
+    img.onload = () => {
+        loadedImages++;
+        if (loadedImages === totalImages) {
+            showStartScreen();
+        }
+    };
+});
+
+window.addEventListener('resize', () => {
+    canvas.height = window.innerHeight; // Ajustar la altura al redimensionar
+    canvas.width = canvas.height * aspectRatio; // Ajustar el ancho basado en la nueva altura
+    scale = canvas.height / 512; // Recalcular el factor de escala
+});
+
+</script>
+</body></html>
