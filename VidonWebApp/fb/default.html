@@ -2,6 +2,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Flappy Bird Clone Vidon bar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Pixelify+Sans:wght@400..700&display=swap" rel="stylesheet">
 <style>
     html, body{
         padding: 0% !important;
@@ -73,6 +76,8 @@ const images = {
 
     vidonLogo: new Image(),
     jugaygana: new Image(),
+    restart: new Image(),
+    medallas: new Image(),
 };
 
 images.background.src = 'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/refs/heads/master/sprites/background-day.png';
@@ -86,8 +91,9 @@ images.gameOver.src = 'https://raw.githubusercontent.com/samuelcust/flappy-bird-
 images.message.src = 'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/refs/heads/master/sprites/message.png';
 
 images.vidonLogo.src = 'https://carta.vidonbar.com.ar/assets/logoCirculo-DgQokdOB.webp';
-images.jugaygana.src = 'https://github.com/naachocaceress/VidonWeb/blob/main/VidonWebApp/fb/jugaygana.png?raw=true';
-
+images.jugaygana.src = 'https://raw.githubusercontent.com/naachocaceress/VidonWeb/refs/heads/main/VidonWebApp/fb/sprites/jugaygana.png';
+images.restart.src = 'https://raw.githubusercontent.com/naachocaceress/VidonWeb/refs/heads/main/VidonWebApp/fb/sprites/button_play_normal.png';
+images.medallas.src = 'https://raw.githubusercontent.com/naachocaceress/VidonWeb/refs/heads/main/VidonWebApp/fb/sprites/medal_gold.png';
 
 for (let i = 0; i < 10; i++) {
     images.numbers[i].src = `https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/refs/heads/master/sprites/${i}.png`;
@@ -156,10 +162,38 @@ function drawScore() {
     }
 
     // Mostrar mensaje de "¡Ganaste!" si el puntaje es mayor a 10
-    if (score > 3) {
+    if (score >= 1) {
+
+        ctx.drawImage(images.medallas, (canvas.width / 2 - 20 * scale), 360 * scale, 40 * scale, 40 * scale);
+
         ctx.fillStyle = 'white'; // Color del texto
-        ctx.font = `${20 * scale}px Arial`; // Tamaño y tipo de fuente
-        ctx.fillText('¡Ganaste!', canvas.width / 2 - 40 * scale, canvas.height / 2); // Dibujar el texto en el centro
+        ctx.font = `${20 * scale}px 'Pixelify Sans', sans-serif`; // Cambiar a la nueva fuente
+        ctx.textAlign = 'center'; // Alinear el texto al centro
+
+        // Aplicar sombra
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)'; // Color de la sombra
+        ctx.shadowOffsetX = 2; // Desplazamiento horizontal de la sombra
+        ctx.shadowOffsetY = 2; // Desplazamiento vertical de la sombra
+        ctx.shadowBlur = 4; // Difuminado de la sombra
+
+        // Dibujar el texto en negrita
+        ctx.font = `bold ${20 * scale}px 'Pixelify Sans', sans-serif`; // Cambiar a negrita
+        ctx.fillText('¡Ganaste!', canvas.width / 2, canvas.height / 1 - 90 * scale); // Dibujar el texto en el centro
+
+        ctx.font = `bold ${20 * scale}px 'Pixelify Sans', sans-serif`; // Cambiar a negrita
+        ctx.fillText('Reclama tu premio', canvas.width / 2, canvas.height / 1 - 65 * scale); // Dibujar el texto en el centro
+
+        const restartButton = document.createElement('a');
+        restartButton.href = 'https://sistemas.vidonbar.com.ar/VClientes/Clientes/CargaRegalo/1'; // Cambiar 'pagina.html' por la URL deseada
+        restartButton.style.position = 'absolute';
+        restartButton.style.top = '94%';
+        restartButton.style.left = '50%';
+        restartButton.style.transform = 'translate(-50%, -50%)';
+        restartButton.style.cursor = 'pointer';
+        restartButton.style.width = '100px';
+        restartButton.style.height = 'auto';
+        restartButton.innerHTML = `<img src="${images.restart.src}" style="width: 100%; height: auto;">`;
+        document.body.appendChild(restartButton);
     }
 }
 
@@ -255,20 +289,20 @@ function endGame() {
 }
 
 function showRestartButton() {
-    const restartButton = document.createElement('button');
-    restartButton.innerText = 'Reiniciar Juego';
+    const restartButton = document.createElement('img');
+    restartButton.src = images.restart.src;
     restartButton.style.position = 'absolute';
-    restartButton.style.top = '50%';
+    restartButton.style.top = '60%';
     restartButton.style.left = '50%';
     restartButton.style.transform = 'translate(-50%, -50%)';
-    restartButton.style.fontSize = '20px';
-    restartButton.style.padding = '10px 20px';
     restartButton.style.cursor = 'pointer';
+    restartButton.style.width = '100px';
+    restartButton.style.height = 'auto';
     document.body.appendChild(restartButton);
 
     restartButton.addEventListener('click', () => {
         resetGame();
-        document.body.removeChild(restartButton); // Eliminar el botón después de reiniciar
+        document.body.removeChild(restartButton);
     });
 }
 
@@ -324,7 +358,7 @@ function showStartScreen() {
 
     
     ctx.drawImage(images.vidonLogo, (canvas.width / 2 - 40 * scale), 10 * scale, 80 * scale, 80 * scale); // Escalar el logo
-    ctx.drawImage(images.jugaygana, (canvas.width / 2 - 100 * scale), 430 * scale, 200 * scale, 60 * scale); // Escalar el logo
+    ctx.drawImage(images.jugaygana, (canvas.width / 2 - 100 * scale), 435 * scale, 200 * scale, 50 * scale); // Escalar el logo
 }
 
 function aiControl() {
