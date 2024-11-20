@@ -78,10 +78,17 @@ const images = {
     jugaygana: new Image(),
     restart: new Image(),
     medallas: new Image(),
+    txtPremio: new Image(),
     btnPremio: new Image(),
 };
 
-images.background.src = 'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/refs/heads/master/sprites/background-day.png';
+const currentHour = new Date().getHours(); // Obtener la hora actual
+
+if (currentHour >= 6 && currentHour < 18) {
+    images.background.src = 'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/refs/heads/master/sprites/background-day.png'; // Fondo de día
+} else {
+    images.background.src = 'https://raw.githubusercontent.com/naachocaceress/VidonWeb/refs/heads/main/VidonWebApp/fb/sprites/background_night.png'; // Fondo de noche
+}
 images.base.src = 'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/refs/heads/master/sprites/base.png';
 images.pipeNorth.src = 'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/refs/heads/master/sprites/pipe-green.png';
 images.pipeSouth.src = 'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/refs/heads/master/sprites/pipe-green.png';
@@ -95,7 +102,8 @@ images.vidonLogo.src = 'https://carta.vidonbar.com.ar/assets/logoCirculo-DgQokdO
 images.jugaygana.src = 'https://raw.githubusercontent.com/naachocaceress/VidonWeb/refs/heads/main/VidonWebApp/fb/sprites/jugaygana.png';
 images.restart.src = 'https://raw.githubusercontent.com/naachocaceress/VidonWeb/refs/heads/main/VidonWebApp/fb/sprites/button_play_normal.png';
 images.medallas.src = 'https://raw.githubusercontent.com/naachocaceress/VidonWeb/refs/heads/main/VidonWebApp/fb/sprites/medal_gold.png';
-images.btnPremio.src = 'https://raw.githubusercontent.com/naachocaceress/VidonWeb/refs/heads/main/VidonWebApp/fb/sprites/btnPremio.png';
+images.txtPremio.src = 'https://raw.githubusercontent.com/naachocaceress/VidonWeb/refs/heads/main/VidonWebApp/fb/sprites/Ganaste.png';
+images.btnPremio.src = 'https://raw.githubusercontent.com/naachocaceress/VidonWeb/refs/heads/main/VidonWebApp/fb/sprites/btnPremioFinal.png';
 
 for (let i = 0; i < 10; i++) {
     images.numbers[i].src = `https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/refs/heads/master/sprites/${i}.png`;
@@ -168,35 +176,20 @@ function drawScore() {
     // Mostrar mensaje de "¡Ganaste!" si el puntaje es mayor a 10
     if (score >= 10) {
 
-        ctx.drawImage(images.medallas, (canvas.width / 2 - 20 * scale), 360 * scale, 40 * scale, 40 * scale);
+        ctx.drawImage(images.medallas, (canvas.width / 2 - 20 * scale), 355 * scale, 40 * scale, 40 * scale);
 
-        ctx.fillStyle = 'white'; // Color del texto
-        ctx.font = `${20 * scale}px 'Pixelify Sans', sans-serif`; // Cambiar a la nueva fuente
-        ctx.textAlign = 'center'; // Alinear el texto al centro
-
-        // Aplicar sombra
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)'; // Color de la sombra
-        ctx.shadowOffsetX = 2; // Desplazamiento horizontal de la sombra
-        ctx.shadowOffsetY = 2; // Desplazamiento vertical de la sombra
-        ctx.shadowBlur = 4; // Difuminado de la sombra
-
-        // Dibujar el texto en negrita
-        ctx.font = `bold ${20 * scale}px 'Pixelify Sans', sans-serif`; // Cambiar a negrita
-        ctx.fillText('¡Ganaste!', canvas.width / 2, canvas.height / 1 - 90 * scale); // Dibujar el texto en el centro
-
-        ctx.font = `bold ${20 * scale}px 'Pixelify Sans', sans-serif`; // Cambiar a negrita
-        ctx.fillText('Reclama tu premio', canvas.width / 2, canvas.height / 1 - 65 * scale); // Dibujar el texto en el centro
+        ctx.drawImage(images.txtPremio, (canvas.width / 2 - 100 * scale), 395 * scale, 200 * scale, 50 * scale);
 
         // Crear el botón de reinicio solo si no existe
         if (!restartButton) {
             restartButton = document.createElement('a');
             restartButton.href = 'https://sistemas.vidonbar.com.ar/VClientes/Clientes/CargaRegalo/1'; // Cambiar 'pagina.html' por la URL deseada
             restartButton.style.position = 'absolute';
-            restartButton.style.top = '94%';
+            restartButton.style.bottom = '-30px';
             restartButton.style.left = '50%';
             restartButton.style.transform = 'translate(-50%, -50%)';
             restartButton.style.cursor = 'pointer';
-            restartButton.style.width = '230px';
+            restartButton.style.width = '220px';
             restartButton.style.height = 'auto';
             restartButton.innerHTML = `<img src="${images.btnPremio.src}" style="width: 100%; height: auto;">`;
             document.body.appendChild(restartButton);
